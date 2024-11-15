@@ -1,0 +1,37 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Register</title>
+</head>
+<body>
+    <header>
+        <h1>Register for Language Exchange</h1>
+    </header>
+    <main>
+        <form action="/register" method="post" enctype="multipart/form-data">
+            <label for="name">Name:</label>
+            <input type="text" id="name" name="name" required><br>
+
+            <label for="email">Email:</label>
+            <input type="email" id="email" name="email" required><br>
+
+            <label for="password">Password:</label>
+            <input type="password" id="password" name="password" required><br>
+
+            <label for="fluentLanguages">Fluent Languages:</label>
+            <input type="text" id="fluentLanguages" name="fluentLanguages" required><br>
+
+            <label for="learningLanguages">Languages You Want to Learn:</label>
+            <input type="text" id="learningLanguages" name="learningLanguages" required><br>
+
+            <label for="photo">Profile Photo:</label>
+            <input type="file" id="photo" name="photo"><br>
+
+            <button type="submit">Register</button>
+        </form>
+    </main>
+    <footer>
+        <p>&copy; 2024 Language Exchange Project</p>
+    </footer>
+</body>
+</html>
