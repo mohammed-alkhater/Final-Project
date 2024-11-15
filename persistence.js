@@ -1,5 +1,4 @@
 const { MongoClient } = require('mongodb');
-const { get } = require('mongoose');
 
 const uri = 'mongodb+srv://Cluster42218:elp9TW5qSHpq@cluster42218.epvsq.mongodb.net/';
 const dbName = 'languageExchangeDB';
