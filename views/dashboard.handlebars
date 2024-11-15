@@ -1,0 +1,18 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Dashboard</title>
+</head>
+<body>
+    <h1>Welcome, {{name}}!</h1>
+
+    <!-- Display the user's profile photo -->
+    {{#if photo}}
+        <img src="{{photo}}" alt="Profile Photo" style="width:150px;height:150px;border-radius:50%;">
+    {{else}}
+        <p>No profile photo available.</p>
+    {{/if}}
+
+    <p>We're glad to have you back!</p>
+</body>
+</html>
