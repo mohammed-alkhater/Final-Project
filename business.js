@@ -1,6 +1,5 @@
 const crypto = require('crypto');
 const { getUserCollection, getSessionCollection } = require('./persistence');
-const { log } = require('console');
 const persistence = require('./persistence')
 
 async function registerUser (name, email, password, fluentLanguages, learningLanguages, photo) {
