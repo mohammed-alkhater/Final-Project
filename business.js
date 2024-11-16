@@ -71,7 +71,7 @@ async function loginUser (email, password) {
 
 async function getUserBySession(sessionId) {
     const sessionCollection = await getSessionCollection();
-    const session = await sessionCollection.findOne({ key: sessionId });
+    const session = await sessionCollection.findOne({ _id: sessionId });
 
     if (!session) {
         return null;

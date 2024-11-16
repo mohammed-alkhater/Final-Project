@@ -18,6 +18,10 @@ app.engine('handlebars', exphbs.engine());
 app.set('view engine', 'handlebars');
 app.set('views', './views');
 
+
+app.get('/register', (req, res) => {
+    res.render('register', { message: req.query.message });
+});
 // Middleware to handle flash messages using session
 app.post('/register', async (req, res) => {
     try {
@@ -48,13 +52,18 @@ app.get('/login', (req, res) => {
 app.post('/login', async (req, res) => {
     try {
         const { email, password } = req.body;
-        const sessionId = await loginUser(email, password);
-
-        if (sessionId) {
-            // Set session ID in a cookie
-            res.cookie('sessionId', sessionId, { httpOnly: true });
-            res.redirect('/dashboard');
+        console.log(`Attempting login with email: ${email}`);
+        
+        let session = await loginUser(email, password);
+        console.log(`LoginUser returned: ${JSON.stringify(session)}`);
+        
+        if (session && session._id) {
+            const sessionId = session._id.toString();
+            console.log('Session ID is ' + sessionId);
+            // Redirect to dashboard with session ID in query parameters
+            res.redirect(`/dashboard?sessionId=${sessionId}`);
         } else {
+            console.log('Login failed: Invalid email or password');
             res.redirect('/login?message=Invalid email or password');
         }
     } catch (error) {
@@ -65,8 +74,10 @@ app.post('/login', async (req, res) => {
 app.get('/dashboard', async (req, res) => {
     try {
         const sessionId = req.query.sessionId;
+        console.log(`Dashboard accessed with session ID: ${sessionId}`);
         // Check if the session ID is valid
         const user = await getUserBySession(sessionId);
+        console.log(`User found: ${JSON.stringify(user)}`);
 
         if (user) {
             res.render('dashboard', { name: user.name, photo: user.photo });
@@ -77,6 +88,7 @@ app.get('/dashboard', async (req, res) => {
         res.status(400).send('Error: ' + error.message);
     }
 });
+
 // Render the index page
 app.get('/', (req, res) => {
     res.render('index', { message: req.query.message });
