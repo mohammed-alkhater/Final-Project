@@ -2,8 +2,7 @@ const express = require('express');
 const exphbs = require('express-handlebars');
 const bodyParser = require('body-parser');
 const fileUpload = require('express-fileupload');
-const { registerUser, loginUser, getUserBySession } = require('./business');
-const { getSessionCollection } = require('./persistence'); // Import session handling
+const { registerUser, loginUser, getUserBySession, verifyEmail, deleteSession } = require('./business');
 const crypto = require('crypto');
 
 const app = express();
@@ -30,7 +29,7 @@ app.post('/register', async (req, res) => {
 
         if (req.files && req.files.photo) {
             const photoFile = req.files.photo;
-            const uploadPath = __dirname + '/uploads/' + photoFile.name;
+            const uploadPath = 'uploads/' + photoFile.name;
             await photoFile.mv(uploadPath);
             photo = uploadPath;
         }
@@ -80,7 +79,7 @@ app.get('/dashboard', async (req, res) => {
         console.log(`User found: ${JSON.stringify(user)}`);
 
         if (user) {
-            res.render('dashboard', { name: user.name, photo: user.photo });
+            res.render('dashboard', { name: user.name, photo: user.photo, sessionId });
         } else {
             res.redirect('/login?message=Please log in to access the dashboard');
         }
@@ -94,6 +93,23 @@ app.get('/', (req, res) => {
     res.render('index', { message: req.query.message });
 });
 
+app.get('/verify-email', (req, res) => {
+    const { token } = req.query;
+    verifyEmail(token);
+    console.log(`Verifying email with token: ${token}`);
+    res.render('verify-email', { token });
+});
+
+app.get('/logout', (req, res) => {
+    const sessionId = req.query.sessionId;
+    console.log(`This is the session: ${sessionId}`);
+    if (!sessionId) {
+        console.log('Session ID is missing');
+    }
+    console.log(`Logging out session: ${sessionId}`);
+    deleteSession(sessionId);
+    res.redirect('/login');
+});
 
 // Start the server
 app.listen(3000, () => {

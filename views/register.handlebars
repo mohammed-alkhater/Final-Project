@@ -1,34 +1,107 @@
+{{!-- register.handlebars --}}
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Register</title>
+    <link rel="stylesheet" href="/stylesheets/style.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #f0f0f0;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            margin: 0;
+        }
+        .container {
+            background-color: #ffffff;
+            border-radius: 10px;
+            box-shadow: 0 0 15px rgba(0, 0, 0, 0.1);
+            padding: 40px;
+            max-width: 600px;
+            width: 100%;
+        }
+        .input-group {
+            display: flex;
+            align-items: center;
+            margin-bottom: 20px;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+            padding: 10px;
+        }
+        .input-icon {
+            margin-right: 10px;
+            color: #888;
+        }
+        input[type="text"], input[type="email"], input[type="password"] {
+            border: none;
+            outline: none;
+            width: 100%;
+        }
+        .btn {
+            background-color: #4a90e2;
+            color: #ffffff;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 5px;
+            cursor: pointer;
+            transition: background-color 0.3s ease;
+            text-decoration: none;
+            text-align: center;
+            width: 100%;
+        }
+        .btn:hover {
+            background-color: #357ab8;
+        }
+        .error-message {
+            color: red;
+            margin-bottom: 20px;
+        }
+    </style>
 </head>
 <body>
     <header>
         <h1>Register for Language Exchange</h1>
     </header>
     <main>
-        <form action="/register" method="post" enctype="multipart/form-data">
-            <label for="name">Name:</label>
-            <input type="text" id="name" name="name" required><br>
-
-            <label for="email">Email:</label>
-            <input type="email" id="email" name="email" required><br>
-
-            <label for="password">Password:</label>
-            <input type="password" id="password" name="password" required><br>
-
-            <label for="fluentLanguages">Fluent Languages:</label>
-            <input type="text" id="fluentLanguages" name="fluentLanguages" required><br>
-
-            <label for="learningLanguages">Languages You Want to Learn:</label>
-            <input type="text" id="learningLanguages" name="learningLanguages" required><br>
-
-            <label for="photo">Profile Photo:</label>
-            <input type="file" id="photo" name="photo"><br>
-
-            <button type="submit">Register</button>
-        </form>
+        <div class="container">
+            <h2>Register</h2>
+            <p>Create your account to get started</p>
+            {{#if error}}
+                <div class="error-message">{{error}}</div>
+            {{/if}}
+            <form action="/register" method="post" enctype="multipart/form-data">
+                <div class="input-group">
+                    <span class="input-icon"><i class="fas fa-user"></i></span>
+                    <input type="text" id="name" name="name" placeholder="Name" required>
+                </div>
+                <div class="input-group">
+                    <span class="input-icon"><i class="fas fa-envelope"></i></span>
+                    <input type="email" id="email" name="email" placeholder="Email" required>
+                </div>
+                <div class="input-group">
+                    <span class="input-icon"><i class="fas fa-lock"></i></span>
+                    <input type="password" id="password" name="password" placeholder="Password" required>
+                </div>
+                <div class="input-group">
+                    <span class="input-icon"><i class="fas fa-language"></i></span>
+                    <input type="text" id="fluentLanguages" name="fluentLanguages" placeholder="Fluent Languages" required>
+                </div>
+                <div class="input-group">
+                    <span class="input-icon"><i class="fas fa-language"></i></span>
+                    <input type="text" id="learningLanguages" name="learningLanguages" placeholder="Languages You Want to Learn" required>
+                </div>
+                <div class="input-group">
+                    <span class="input-icon"><i class="fas fa-camera"></i></span>
+                    <input type="file" id="photo" name="photo">
+                </div>
+                <button type="submit" class="btn">Register</button>
+            </form>
+        </div>
     </main>
     <footer>
         <p>&copy; 2024 Language Exchange Project</p>

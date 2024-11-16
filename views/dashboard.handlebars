@@ -1,18 +1,69 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Dashboard</title>
+    <link rel="stylesheet" href="/stylesheets/style.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #f0f0f0;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            margin: 0;
+        }
+        .dashboard-container {
+            background-color: #ffffff;
+            border-radius: 10px;
+            box-shadow: 0 0 15px rgba(0, 0, 0, 0.1);
+            padding: 40px;
+            max-width: 600px;
+            width: 100%;
+        }
+        h2 {
+            color: #4a90e2;
+            margin-bottom: 20px;
+        }
+        .welcome-message {
+            margin-bottom: 20px;
+        }
+        .profile-photo {
+            display: flex;
+            justify-content: center;
+            margin-bottom: 20px;
+        }
+        .btn {
+            background-color: #4a90e2;
+            color: #ffffff;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 5px;
+            cursor: pointer;
+            transition: background-color 0.3s ease;
+            text-decoration: none;
+            text-align: center;
+        }
+        .btn:hover {
+            background-color: #357ab8;
+        }
+    </style>
 </head>
 <body>
-    <h1>Welcome, {{name}}!</h1>
-
-    <!-- Display the user's profile photo -->
-    {{#if photo}}
-        <img src="{{photo}}" alt="Profile Photo" style="width:150px;height:150px;border-radius:50%;">
-    {{else}}
-        <p>No profile photo available.</p>
-    {{/if}}
-
-    <p>We're glad to have you back!</p>
+    <div class="dashboard-container">
+        <h2>Welcome to Your Dashboard</h2>
+        <p class="welcome-message">Hello, {{name}}! We're glad to have you back.</p>
+        <div class="profile-photo">
+            {{#if photo}}
+                <img src="{{photo}}" alt="Profile Photo" style="width:150px;height:150px;border-radius:50%;">
+            {{else}}
+                <p>No profile photo available.</p>
+            {{/if}}
+        </div>
+        <a href="/logout?sessionId={{sessionId}}" class="btn">Logout</a>
+    </div>
 </body>
 </html>

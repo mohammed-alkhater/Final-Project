@@ -69,9 +69,11 @@ async function loginUser (email, password) {
 };
 
 
+const { ObjectId } = require('mongodb');
+
 async function getUserBySession(sessionId) {
     const sessionCollection = await getSessionCollection();
-    const session = await sessionCollection.findOne({ _id: sessionId });
+    const session = await sessionCollection.findOne({ _id: new ObjectId(sessionId) });
 
     if (!session) {
         return null;
@@ -82,5 +84,22 @@ async function getUserBySession(sessionId) {
 
     return user;
 }
-    
-module.exports = { registerUser, loginUser, getUserBySession };
+
+
+async function verifyEmail(token) {
+    const userCollection = await getUserCollection();
+    const user = await userCollection.findOne({ verificationToken: token });
+
+    if (!user) {
+        throw new Error('Invalid token');
+    }
+
+    await userCollection.updateOne({ _id: user._id }, { $set: { emailVerified: true } });
+    console.log('User email verified');
+}
+
+async function deleteSession(sessionId) {
+    const sessionCollection = await getSessionCollection();
+    await sessionCollection.deleteOne({ _id: new ObjectId(sessionId) });
+}
+module.exports = { registerUser, loginUser, getUserBySession, verifyEmail, deleteSession };

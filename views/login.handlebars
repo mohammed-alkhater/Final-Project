@@ -1,22 +1,139 @@
+{{!-- login-register-alternate.handlebars --}}
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
-    <title>Login</title>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Login & Register</title>
+    <link rel="stylesheet" href="/stylesheets/style.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #f0f0f0;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            margin: 0;
+        }
+        .container {
+            background-color: #ffffff;
+            border-radius: 10px;
+            box-shadow: 0 0 15px rgba(0, 0, 0, 0.1);
+            overflow: hidden;
+            display: flex;
+            max-width: 900px;
+            width: 100%;
+        }
+        .login-register-container {
+            display: flex;
+            width: 100%;
+        }
+        .form-container {
+            padding: 40px;
+            width: 50%;
+        }
+        .login-form-container {
+            background-color: #ffffff;
+        }
+        .register-form-container {
+            background-color: #4a90e2;
+            color: #ffffff;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+        }
+        .input-group {
+            display: flex;
+            align-items: center;
+            margin-bottom: 20px;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+            padding: 10px;
+        }
+        .input-icon {
+            margin-right: 10px;
+            color: #888;
+        }
+        input[type="email"], input[type="password"] {
+            border: none;
+            outline: none;
+            width: 100%;
+        }
+        .btn {
+            background-color: #4a90e2;
+            color: #ffffff;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 5px;
+            cursor: pointer;
+            transition: background-color 0.3s ease;
+            text-decoration: none;
+            text-align: center;
+        }
+        .btn:hover {
+            background-color: #357ab8;
+        }
+        .login-btn {
+            width: 100%;
+            margin-top: 10px;
+        }
+        .forgot-password {
+            display: block;
+            margin-top: 10px;
+            text-align: right;
+            color: #4a90e2;
+            text-decoration: none;
+        }
+        .forgot-password:hover {
+            text-decoration: underline;
+        }
+        .register-info h2 {
+            margin-bottom: 20px;
+        }
+        .register-info p {
+            margin-bottom: 30px;
+            text-align: center;
+            max-width: 300px;
+        }
+        .error-message {
+            color: red;
+            margin-bottom: 20px;
+        }
+    </style>
 </head>
 <body>
-    <h1>Login to Language Exchange</h1>
-
-    <!-- Flash Message -->
-    {{#if message}}
-        <div class="flash-message">{{message}}</div>
-    {{/if}}
-
-    <form action="/login" method="post">
-        <label for="email">Email:</label>
-        <input type="email" id="email" name="email" required><br>
-        <label for="password">Password:</label>
-        <input type="password" id="password" name="password" required><br>
-        <button type="submit">Login</button>
-    </form>
+    <div class="container">
+        <div class="login-register-container">
+            <div class="form-container login-form-container">
+                <form action="/login" method="POST">
+                    <h2>Login</h2>
+                    <p>Sign in to your account to continue</p>
+                    {{#if message}}
+                        <div class="error-message">{{message}}</div>
+                    {{/if}}
+                    <div class="input-group">
+                        <span class="input-icon"><i class="fas fa-envelope"></i></span>
+                        <input type="email" name="email" placeholder="Email" required>
+                    </div>
+                    <div class="input-group">
+                        <span class="input-icon"><i class="fas fa-lock"></i></span>
+                        <input type="password" name="password" placeholder="Password" required>
+                    </div>
+                    <button type="submit" class="btn login-btn">Login</button>
+                    <a href="/forgot-password" class="forgot-password">Forgot password?</a>
+                </form>
+            </div>
+            <div class="form-container register-form-container">
+                <div class="register-info">
+                    <h2>New Here?</h2>
+                    <p>Join our platform to connect with language learners from around the world.</p>
+                    <a href="/register" class="btn register-btn">Register Now!</a>
+                </div>
+            </div>
+        </div>
+    </div>
 </body>
 </html>
