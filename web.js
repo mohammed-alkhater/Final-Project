@@ -111,6 +111,11 @@ app.get('/logout', (req, res) => {
     res.redirect('/login');
 });
 
+
+app.get('/forgot-password', (req, res) => {
+    res.render('forgot-password');
+});
+
 // Start the server
 app.listen(3000, () => {
     console.log('Server running on http://localhost:3000');
