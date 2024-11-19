@@ -26,15 +26,6 @@
         }
         h2 {
             color: #4a90e2;
-            margin-bottom: 20px;
-        }
-        .welcome-message {
-            margin-bottom: 20px;
-        }
-        .profile-photo {
-            display: flex;
-            justify-content: center;
-            margin-bottom: 20px;
         }
         .btn {
             background-color: #4a90e2;
@@ -48,6 +39,38 @@
             text-align: center;
         }
         .btn:hover {
+            background-color: #357ab8;
+        }
+        .user-snippet {
+            border: 1px solid #ddd;
+            border-radius: 5px;
+            padding: 10px;
+            margin-bottom: 10px;
+            display: flex;
+            align-items: center;
+        }
+        .user-snippet img {
+            width: 50px;
+            height: 50px;
+            border-radius: 50%;
+            margin-right: 10px;
+        }
+        .user-snippet h3 {
+            margin: 0;
+            flex-grow: 1;
+        }
+        .contact-btn {
+            background-color: #4a90e2;
+            color: #ffffff;
+            border: none;
+            padding: 5px 10px;
+            border-radius: 5px;
+            cursor: pointer;
+            transition: background-color 0.3s ease;
+            text-decoration: none;
+            text-align: center;
+        }
+        .contact-btn:hover {
             background-color: #357ab8;
         }
     </style>
@@ -64,6 +87,31 @@
             {{/if}}
         </div>
         <a href="/logout?sessionId={{sessionId}}" class="btn">Logout</a>
+        <h3>Users who speak the languages you are learning:</h3>
+        {{#each usersByLanguages}}
+            <div class="user-snippet">
+                {{#if this.photo}}
+                    <img src="{{this.photo}}" alt="User Photo">
+                {{else}}
+                    <img src="/images/default-profile.png" alt="Default Photo">
+                {{/if}}
+                <h3>{{this.name}}</h3>
+                <p>Fluent in: {{this.fluentLanguages}}</p>
+                {{#if (includes ../contacts this.email)}}
+                    <form action="/remove-contact" method="post" style="margin: 0;">
+                        <input type="hidden" name="sessionId" value="{{../sessionId}}">
+                        <input type="hidden" name="contactEmail" value="{{this.email}}">
+                        <button type="submit" class="contact-btn">Remove Contact</button>
+                    </form>
+                {{else}}
+                    <form action="/add-contact" method="post" style="margin: 0;">
+                        <input type="hidden" name="sessionId" value="{{../sessionId}}">
+                        <input type="hidden" name="contactEmail" value="{{this.email}}">
+                        <button type="submit" class="contact-btn">Add Contact</button>
+                    </form>
+                {{/if}}
+            </div>
+        {{/each}}
     </div>
 </body>
 </html>

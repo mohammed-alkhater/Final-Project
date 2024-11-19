@@ -28,4 +28,7 @@ const getSessionCollection = async () => {
     const database = await connectDB();
     return database.collection('session');
 };
-module.exports = { connectDB, getUserCollection, getSessionCollection, getUserDetails };
+
+
+
+module.exports = { connectDB, getUserCollection, getSessionCollection, getUserDetails};

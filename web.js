@@ -2,18 +2,27 @@ const express = require('express');
 const exphbs = require('express-handlebars');
 const bodyParser = require('body-parser');
 const fileUpload = require('express-fileupload');
-const { registerUser, loginUser, getUserBySession, verifyEmail, deleteSession } = require('./business');
+const { registerUser, loginUser, getUserBySession, verifyEmail, deleteSession, updateUserPassword, updateUserResetKey, getUserDetailsbyEmail, findUsersByLanguages, addContact, removeContact } = require('./business');
 const crypto = require('crypto');
 
 const app = express();
+
 
 // Middleware setup
 app.use(bodyParser.urlencoded({ extended: true }));
 app.use(fileUpload());
 app.use('/uploads', express.static('uploads'));
 
+const hbs = exphbs.create({
+    helpers: {
+        includes: function(array, value) {
+            return array && array.includes(value.toString());
+        }
+    }
+});
+
 // Set up view engine
-app.engine('handlebars', exphbs.engine());
+app.engine('handlebars', hbs.engine);
 app.set('view engine', 'handlebars');
 app.set('views', './views');
 
@@ -26,6 +35,8 @@ app.post('/register', async (req, res) => {
     try {
         const { name, email, password, fluentLanguages, learningLanguages } = req.body;
         let photo = null;
+        const fluentLanguagesArray = fluentLanguages.split(',').map(lang => lang.trim());
+        const learningLanguagesArray = learningLanguages.split(',').map(lang => lang.trim());
 
         if (req.files && req.files.photo) {
             const photoFile = req.files.photo;
@@ -34,7 +45,7 @@ app.post('/register', async (req, res) => {
             photo = uploadPath;
         }
 
-        await registerUser(name, email, password, fluentLanguages, learningLanguages, photo);
+        await registerUser(name, email, password, fluentLanguagesArray, learningLanguagesArray, photo);
 
         res.redirect('/?message=Registration Successful. Check your email.');
     } catch (error) {
@@ -79,7 +90,9 @@ app.get('/dashboard', async (req, res) => {
         console.log(`User found: ${JSON.stringify(user)}`);
 
         if (user) {
-            res.render('dashboard', { name: user.name, photo: user.photo, sessionId });
+            const usersByLanguages = await findUsersByLanguages(user.learningLanguages);
+            const contacts = user.contacts || [];
+            res.render('dashboard', { name: user.name, photo: user.photo, sessionId, usersByLanguages, contacts });
         } else {
             res.redirect('/login?message=Please log in to access the dashboard');
         }
@@ -116,6 +129,69 @@ app.get('/forgot-password', (req, res) => {
     res.render('forgot-password');
 });
 
+app.post('/forgot-password', async (req, res) => {
+    const { email } = req.body;
+    const user = await getUserDetailsbyEmail(email);
+    if (user) {
+        const resetKey = crypto.randomBytes(16).toString('hex');
+        await updateUserResetKey(email, resetKey);
+        const resetUrl = `http://localhost:3000/reset-password?key=${resetKey}`;
+        console.log(`Reset URL: ${resetUrl}`);
+        // Send email with resetUrl (email sending logic not shown here)
+    }
+    res.redirect('/forgot-password?message=If the email exists, a reset link has been sent.');
+});
+
+app.get('/reset-password', (req, res) => {
+    const { key } = req.query;
+    res.render('reset-password', { key });
+});
+
+app.post('/reset-password', async (req, res) => {
+    const { key, password, confirmPassword } = req.body;
+    if (password !== confirmPassword) {
+        return res.redirect(`/reset-password?key=${key}&message=Passwords do not match`);
+    }
+    const success = await updateUserPassword(key, password);
+    if (success) {
+        res.redirect('/login?message=Password reset successful. Please log in.');
+    } else {
+        res.redirect(`/reset-password?key=${key}&message=Invalid or expired reset key`);
+    }
+});
+
+
+
+
+app.post('/add-contact', async (req, res) => {
+    try {
+        const { sessionId, contactEmail } = req.body;
+        const user = await getUserBySession(sessionId);
+        if (user) {
+            await addContact(user.email, contactEmail);
+            res.redirect(`/dashboard?sessionId=${sessionId}`);
+        } else {
+            res.redirect('/login?message=Please log in to add contacts');
+        }
+    } catch (error) {
+        res.status(400).send('Error: ' + error.message);
+    }
+});
+
+app.post('/remove-contact', async (req, res) => {
+    try {
+        const { sessionId, contactEmail } = req.body;
+        const user = await getUserBySession(sessionId);
+        if (user) {
+            await removeContact(user.email, contactEmail);
+            res.redirect(`/dashboard?sessionId=${sessionId}`);
+        } else {
+            res.redirect('/login?message=Please log in to remove contacts');
+        }
+    } catch (error) {
+        res.status(400).send('Error: ' + error.message);
+    }
+});
 // Start the server
 app.listen(3000, () => {
     console.log('Server running on http://localhost:3000');
