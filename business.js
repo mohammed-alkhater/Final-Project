@@ -146,6 +146,21 @@ async function removeContact(userEmail, contactEmail) {
         { $pull: { contacts: contactEmail } }
     );
 }
+
+async function blockUser(blockerEmail, blockedEmail) {
+    const userCollection = await getUserCollection();
+    await userCollection.updateOne(
+        { email: blockerEmail },
+        { $addToSet: { blockedUsers: blockedEmail } }
+    );
+}
+
+async function isUserBlocked(viewerEmail, profileEmail) {
+    const userCollection = await getUserCollection();
+    const user = await userCollection.findOne({ email: profileEmail, blockedUsers: { $in: [viewerEmail] } });
+    return !!user;
+}
+
 module.exports = { registerUser, loginUser, getUserBySession, verifyEmail, deleteSession,
-     updateUserResetKey, updateUserPassword, getUserDetailsbyEmail,
-    findUsersByLanguages, addContact, removeContact };
+    updateUserResetKey, updateUserPassword, getUserDetailsbyEmail,
+    findUsersByLanguages, addContact, removeContact, blockUser, isUserBlocked };

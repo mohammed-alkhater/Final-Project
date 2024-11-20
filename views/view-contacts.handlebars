@@ -1,0 +1,83 @@
+<!-- view-contacts.handlebars -->
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>View Contacts</title>
+    <link rel="stylesheet" href="/stylesheets/style.css">
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #f0f0f0;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            margin: 0;
+        }
+        .container {
+            background-color: #ffffff;
+            border-radius: 10px;
+            box-shadow: 0 0 15px rgba(0, 0, 0, 0.1);
+            padding: 40px;
+            max-width: 800px;
+            width: 100%;
+        }
+        .user-snippet {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+            padding: 10px;
+            margin-bottom: 10px;
+        }
+        .user-details {
+            flex-grow: 1;
+        }
+        .user-details p {
+            margin: 5px 0;
+        }
+        .btn {
+            background-color: #4a90e2;
+            color: #ffffff;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 5px;
+            cursor: pointer;
+            transition: background-color 0.3s ease;
+            text-decoration: none;
+            text-align: center;
+            margin: 5px;
+        }
+        .btn:hover {
+            background-color: #357ab8;
+        }
+        .btn-container {
+            display: flex;
+            flex-direction: column;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h2>Your Contacts</h2>
+        {{#each contacts}}
+            <div class="user-snippet">
+                <div class="user-details">
+                    <p><strong>Name:</strong> {{this.name}}</p>
+                    <p><strong>Email:</strong> {{this.email}}</p>
+                    <p><strong>Fluent Languages:</strong> {{this.fluentLanguages}}</p>
+                    <p><strong>Learning Languages:</strong> {{this.learningLanguages}}</p>
+                </div>
+                <div class="btn-container">
+                    <a href="/block-user?email={{this.email}}&sessionId={{../sessionId}}" class="btn">Block User</a>
+                    <a href="/message-user?email={{this.email}}&sessionId={{../sessionId}}" class="btn">Message</a>
+                </div>
+            </div>
+        {{/each}}
+        <a href="/dashboard?sessionId={{sessionId}}" class="btn">Back to Dashboard</a>
+    </div>
+</body>
+</html>

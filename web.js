@@ -2,7 +2,7 @@ const express = require('express');
 const exphbs = require('express-handlebars');
 const bodyParser = require('body-parser');
 const fileUpload = require('express-fileupload');
-const { registerUser, loginUser, getUserBySession, verifyEmail, deleteSession, updateUserPassword, updateUserResetKey, getUserDetailsbyEmail, findUsersByLanguages, addContact, removeContact } = require('./business');
+const { registerUser, loginUser, getUserBySession, verifyEmail, deleteSession, updateUserPassword, updateUserResetKey, getUserDetailsbyEmail, findUsersByLanguages, addContact, removeContact, blockUser, isUserBlocked } = require('./business');
 const crypto = require('crypto');
 
 const app = express();
@@ -192,6 +192,70 @@ app.post('/remove-contact', async (req, res) => {
         res.status(400).send('Error: ' + error.message);
     }
 });
+
+const { getUserCollection } = require('./persistence');
+
+app.get('/view-contacts', async (req, res) => {
+    try {
+        const sessionId = req.query.sessionId;
+        const user = await getUserBySession(sessionId);
+
+        if (user) {
+            const contacts = user.contacts || [];
+            const userCollection = await getUserCollection();
+            const contactUsers = await userCollection.find({ email: { $in: contacts } }).toArray();
+            res.render('view-contacts', { contacts: contactUsers, sessionId });
+        } else {
+            res.redirect('/login?message=Please log in to view contacts');
+        }
+    } catch (error) {
+        res.status(400).send('Error: ' + error.message);
+    }
+});
+
+
+app.get('/block-user', async (req, res) => {
+    try {
+        const { email, sessionId } = req.query;
+        const user = await getUserBySession(sessionId);
+        if (user) {
+            await blockUser(user.email, email);
+            res.redirect('/view-contacts?sessionId=' + sessionId);
+        } else {
+            res.redirect('/login?message=Please log in to block users');
+        }
+    } catch (error) {
+        res.status(400).send('Error: ' + error.message);
+    }
+});
+
+app.get('/profile', async (req, res) => {
+    try {
+        const { email, sessionId } = req.query;
+        const viewer = await getUserBySession(sessionId);
+        if (viewer) {
+            const blocked = await isUserBlocked(viewer.email, email);
+            if (blocked) {
+                res.status(403).send('You are blocked from viewing this profile.');
+            } else {
+                const userCollection = await getUserCollection();
+                const profileUser = await userCollection.findOne({ email });
+                res.render('profile', { user: profileUser });
+            }
+        } else {
+            res.redirect('/login?message=Please log in to view profiles');
+        }
+    } catch (error) {
+        res.status(400).send('Error: ' + error.message);
+    }
+});
+
+app.get('/message-user', async (req, res) => {
+    const { email } = req.query;
+    // Implement the logic to message the user
+    res.redirect('/view-contacts?sessionId=' + req.query.sessionId);
+});
+
 // Start the server
 app.listen(3000, () => {
     console.log('Server running on http://localhost:3000');

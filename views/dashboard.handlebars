@@ -37,6 +37,7 @@
             transition: background-color 0.3s ease;
             text-decoration: none;
             text-align: center;
+            margin: 5px;
         }
         .btn:hover {
             background-color: #357ab8;
@@ -87,6 +88,7 @@
             {{/if}}
         </div>
         <a href="/logout?sessionId={{sessionId}}" class="btn">Logout</a>
+        <a href="/view-contacts?sessionId={{sessionId}}" class="btn">View Contacts</a>
         <h3>Users who speak the languages you are learning:</h3>
         {{#each usersByLanguages}}
             <div class="user-snippet">
