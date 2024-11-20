@@ -29,6 +29,9 @@ const getSessionCollection = async () => {
     return database.collection('session');
 };
 
+const getMessagesCollection = async () => {
+    const database = await connectDB();
+    return database.collection('messages');
+};
 
-
-module.exports = { connectDB, getUserCollection, getSessionCollection, getUserDetails};
+module.exports = { connectDB, getUserCollection, getSessionCollection, getUserDetails, getMessagesCollection };

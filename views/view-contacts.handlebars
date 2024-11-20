@@ -72,8 +72,12 @@
                     <p><strong>Learning Languages:</strong> {{this.learningLanguages}}</p>
                 </div>
                 <div class="btn-container">
-                    <a href="/block-user?email={{this.email}}&sessionId={{../sessionId}}" class="btn">Block User</a>
-                    <a href="/message-user?email={{this.email}}&sessionId={{../sessionId}}" class="btn">Message</a>
+                    {{#if this.isBlocked}}
+                        <a href="/unblock-user?email={{this.email}}&sessionId={{../sessionId}}" class="btn">Unblock User</a>
+                    {{else}}
+                        <a href="/block-user?email={{this.email}}&sessionId={{../sessionId}}" class="btn">Block User</a>
+                    {{/if}}
+                    <a href="/chat?sessionId={{../sessionId}}&email={{this.email}}" class="btn">Message</a>
                 </div>
             </div>
         {{/each}}

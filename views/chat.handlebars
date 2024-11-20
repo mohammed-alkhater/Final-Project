@@ -1,0 +1,88 @@
+<!-- views/chat.handlebars -->
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Chat</title>
+    <link rel="stylesheet" href="/stylesheets/style.css">
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #f0f0f0;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            margin: 0;
+        }
+        .chat-container {
+            background-color: #ffffff;
+            border-radius: 10px;
+            box-shadow: 0 0 15px rgba(0, 0, 0, 0.1);
+            padding: 20px;
+            max-width: 600px;
+            width: 100%;
+            display: flex;
+            flex-direction: column;
+        }
+        .messages {
+            flex-grow: 1;
+            overflow-y: auto;
+            margin-bottom: 20px;
+        }
+        .message {
+            padding: 10px;
+            border-radius: 5px;
+            margin-bottom: 10px;
+        }
+        .message.sent {
+            background-color: #e1ffc7;
+            align-self: flex-end;
+        }
+        .message.received {
+            background-color: #f1f1f1;
+            align-self: flex-start;
+        }
+        .input-group {
+            display: flex;
+        }
+        .input-group input {
+            flex-grow: 1;
+            padding: 10px;
+            border: 1px solid #ddd;
+            border-radius: 5px 0 0 5px;
+            outline: none;
+        }
+        .input-group button {
+            padding: 10px 20px;
+            border: none;
+            background-color: #4a90e2;
+            color: #ffffff;
+            border-radius: 0 5px 5px 0;
+            cursor: pointer;
+        }
+        .input-group button:hover {
+            background-color: #357ab8;
+        }
+    </style>
+</head>
+<body>
+    <div class="chat-container">
+        <div class="messages">
+            {{#each messages}}
+                <div class="message {{#if (eq this.senderEmail ../userEmail)}}sent{{else}}received{{/if}}">
+                    <p>{{this.message}}</p>
+                    <small>{{this.timestamp}}</small>
+                </div>
+            {{/each}}
+        </div>
+        <form action="/send-message" method="post" class="input-group">
+            <input type="hidden" name="sessionId" value="{{sessionId}}">
+            <input type="hidden" name="receiverEmail" value="{{receiverEmail}}">
+            <input type="text" name="message" placeholder="Type a message" required>
+            <button type="submit">Send</button>
+        </form>
+    </div>
+</body>
+</html>

@@ -2,21 +2,24 @@ const express = require('express');
 const exphbs = require('express-handlebars');
 const bodyParser = require('body-parser');
 const fileUpload = require('express-fileupload');
-const { registerUser, loginUser, getUserBySession, verifyEmail, deleteSession, updateUserPassword, updateUserResetKey, getUserDetailsbyEmail, findUsersByLanguages, addContact, removeContact, blockUser, isUserBlocked } = require('./business');
+const { registerUser, loginUser, getUserBySession, verifyEmail, deleteSession, updateUserPassword, updateUserResetKey, getUserDetailsbyEmail, findUsersByLanguages, addContact, removeContact, blockUser, isUserBlocked, unblockUser, sendMessage, getMessages } = require('./business');
 const crypto = require('crypto');
 
 const app = express();
-
 
 // Middleware setup
 app.use(bodyParser.urlencoded({ extended: true }));
 app.use(fileUpload());
 app.use('/uploads', express.static('uploads'));
 
+// Register Handlebars helpers
 const hbs = exphbs.create({
     helpers: {
         includes: function(array, value) {
             return array && array.includes(value.toString());
+        },
+        eq: function(a, b) {
+            return a === b;
         }
     }
 });
@@ -26,11 +29,12 @@ app.engine('handlebars', hbs.engine);
 app.set('view engine', 'handlebars');
 app.set('views', './views');
 
-
 app.get('/register', (req, res) => {
     res.render('register', { message: req.query.message });
 });
-// Middleware to handle flash messages using session
+
+
+// Handle registration
 app.post('/register', async (req, res) => {
     try {
         const { name, email, password, fluentLanguages, learningLanguages } = req.body;
@@ -81,18 +85,20 @@ app.post('/login', async (req, res) => {
     }
 });
 
+
+// Render the dashboard page
 app.get('/dashboard', async (req, res) => {
     try {
         const sessionId = req.query.sessionId;
         console.log(`Dashboard accessed with session ID: ${sessionId}`);
-        // Check if the session ID is valid
         const user = await getUserBySession(sessionId);
         console.log(`User found: ${JSON.stringify(user)}`);
 
         if (user) {
             const usersByLanguages = await findUsersByLanguages(user.learningLanguages);
             const contacts = user.contacts || [];
-            res.render('dashboard', { name: user.name, photo: user.photo, sessionId, usersByLanguages, contacts });
+            const filteredUsers = usersByLanguages.filter(u => !user.blockedUsers.includes(u.email));
+            res.render('dashboard', { name: user.name, photo: user.photo, sessionId, usersByLanguages: filteredUsers, contacts });
         } else {
             res.redirect('/login?message=Please log in to access the dashboard');
         }
@@ -106,6 +112,8 @@ app.get('/', (req, res) => {
     res.render('index', { message: req.query.message });
 });
 
+
+// Handle email verification
 app.get('/verify-email', (req, res) => {
     const { token } = req.query;
     verifyEmail(token);
@@ -113,6 +121,8 @@ app.get('/verify-email', (req, res) => {
     res.render('verify-email', { token });
 });
 
+
+// Handle logout
 app.get('/logout', (req, res) => {
     const sessionId = req.query.sessionId;
     console.log(`This is the session: ${sessionId}`);
@@ -124,11 +134,13 @@ app.get('/logout', (req, res) => {
     res.redirect('/login');
 });
 
-
+// Handle forgot password
 app.get('/forgot-password', (req, res) => {
     res.render('forgot-password');
 });
 
+
+// Handle forgot password
 app.post('/forgot-password', async (req, res) => {
     const { email } = req.body;
     const user = await getUserDetailsbyEmail(email);
@@ -142,11 +154,14 @@ app.post('/forgot-password', async (req, res) => {
     res.redirect('/forgot-password?message=If the email exists, a reset link has been sent.');
 });
 
+
+// Handle reset password
 app.get('/reset-password', (req, res) => {
     const { key } = req.query;
     res.render('reset-password', { key });
 });
 
+// Handle reset password
 app.post('/reset-password', async (req, res) => {
     const { key, password, confirmPassword } = req.body;
     if (password !== confirmPassword) {
@@ -161,8 +176,7 @@ app.post('/reset-password', async (req, res) => {
 });
 
 
-
-
+// Handle adding and removing contacts
 app.post('/add-contact', async (req, res) => {
     try {
         const { sessionId, contactEmail } = req.body;
@@ -178,6 +192,8 @@ app.post('/add-contact', async (req, res) => {
     }
 });
 
+
+// Handle removing contacts
 app.post('/remove-contact', async (req, res) => {
     try {
         const { sessionId, contactEmail } = req.body;
@@ -195,6 +211,8 @@ app.post('/remove-contact', async (req, res) => {
 
 const { getUserCollection } = require('./persistence');
 
+
+// Handle blocking and unblocking users
 app.get('/view-contacts', async (req, res) => {
     try {
         const sessionId = req.query.sessionId;
@@ -204,6 +222,12 @@ app.get('/view-contacts', async (req, res) => {
             const contacts = user.contacts || [];
             const userCollection = await getUserCollection();
             const contactUsers = await userCollection.find({ email: { $in: contacts } }).toArray();
+
+            // Check if each contact is blocked
+            for (let contact of contactUsers) {
+                contact.isBlocked = await isUserBlocked(contact.email, user.email);
+            }
+
             res.render('view-contacts', { contacts: contactUsers, sessionId });
         } else {
             res.redirect('/login?message=Please log in to view contacts');
@@ -213,7 +237,7 @@ app.get('/view-contacts', async (req, res) => {
     }
 });
 
-
+// Handle blocking and unblocking users
 app.get('/block-user', async (req, res) => {
     try {
         const { email, sessionId } = req.query;
@@ -229,6 +253,24 @@ app.get('/block-user', async (req, res) => {
     }
 });
 
+// Handle blocking and unblocking users
+app.get('/unblock-user', async (req, res) => {
+    try {
+        const { email, sessionId } = req.query;
+        const user = await getUserBySession(sessionId);
+        if (user) {
+            await unblockUser(user.email, email);
+            res.redirect('/view-contacts?sessionId=' + sessionId);
+        } else {
+            res.redirect('/login?message=Please log in to unblock users');
+        }
+    } catch (error) {
+        res.status(400).send('Error: ' + error.message);
+    }
+});
+
+
+// Handle viewing profiles
 app.get('/profile', async (req, res) => {
     try {
         const { email, sessionId } = req.query;
@@ -250,10 +292,36 @@ app.get('/profile', async (req, res) => {
     }
 });
 
-app.get('/message-user', async (req, res) => {
-    const { email } = req.query;
-    // Implement the logic to message the user
-    res.redirect('/view-contacts?sessionId=' + req.query.sessionId);
+// Handle viewing messages
+app.get('/chat', async (req, res) => {
+    try {
+        const { sessionId, email } = req.query;
+        const user = await getUserBySession(sessionId);
+        if (user) {
+            const messages = await getMessages(user.email, email);
+            res.render('chat', { messages, sessionId, userEmail: user.email, receiverEmail: email });
+        } else {
+            res.redirect('/login?message=Please log in to view messages');
+        }
+    } catch (error) {
+        res.status(400).send('Error: ' + error.message);
+    }
+});
+
+// Handle sending messages
+app.post('/send-message', async (req, res) => {
+    try {
+        const { sessionId, receiverEmail, message } = req.body;
+        const user = await getUserBySession(sessionId);
+        if (user) {
+            await sendMessage(user.email, receiverEmail, message);
+            res.redirect(`/chat?sessionId=${sessionId}&email=${receiverEmail}`);
+        } else {
+            res.redirect('/login?message=Please log in to send messages');
+        }
+    } catch (error) {
+        res.status(400).send('Error: ' + error.message);
+    }
 });
 
 // Start the server

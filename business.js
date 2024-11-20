@@ -1,5 +1,5 @@
 const crypto = require('crypto');
-const { getUserCollection, getSessionCollection, getUserDetails } = require('./persistence');
+const { getUserCollection, getSessionCollection, getUserDetails, getMessagesCollection } = require('./persistence');
 const persistence = require('./persistence')
 
 async function registerUser (name, email, password, fluentLanguages, learningLanguages, photo) {
@@ -155,12 +155,42 @@ async function blockUser(blockerEmail, blockedEmail) {
     );
 }
 
+async function unblockUser(blockerEmail, blockedEmail) {
+    const userCollection = await getUserCollection();
+    await userCollection.updateOne(
+        { email: blockerEmail },
+        { $pull: { blockedUsers: blockedEmail } }
+    );
+}
+
 async function isUserBlocked(viewerEmail, profileEmail) {
     const userCollection = await getUserCollection();
     const user = await userCollection.findOne({ email: profileEmail, blockedUsers: { $in: [viewerEmail] } });
     return !!user;
 }
 
+async function sendMessage(senderEmail, receiverEmail, message) {
+    const messagesCollection = await getMessagesCollection();
+    const newMessage = {
+        senderEmail,
+        receiverEmail,
+        message,
+        timestamp: new Date()
+    };
+    await messagesCollection.insertOne(newMessage);
+}
+
+async function getMessages(userEmail, contactEmail) {
+    const messagesCollection = await getMessagesCollection();
+    const messages = await messagesCollection.find({
+        $or: [
+            { senderEmail: userEmail, receiverEmail: contactEmail },
+            { senderEmail: contactEmail, receiverEmail: userEmail }
+        ]
+    }).sort({ timestamp: 1 }).toArray();
+    return messages;
+}
+
 module.exports = { registerUser, loginUser, getUserBySession, verifyEmail, deleteSession,
     updateUserResetKey, updateUserPassword, getUserDetailsbyEmail,
-    findUsersByLanguages, addContact, removeContact, blockUser, isUserBlocked };
+    findUsersByLanguages, addContact, removeContact, blockUser, unblockUser, isUserBlocked, sendMessage, getMessages };
