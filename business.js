@@ -36,6 +36,9 @@ async function registerUser(name, email, password, fluentLanguages, learningLang
         emailVerified: false,
         verificationToken,
         createdAt: new Date(),
+        badges: [], // Initialize badges field
+        messagesSent: 0, // Initialize messagesSent
+        messagesReceived: 0 // Initialize messagesReceived
     };
 
     await userCollection.insertOne(newUser);
@@ -47,7 +50,6 @@ async function registerUser(name, email, password, fluentLanguages, learningLang
 }
 
 async function loginUser(email, password) {
-    let details = await persistence.getUserDetails(email);
     if (!email || !password) {
         throw new Error('Email and password are required');
     }
@@ -55,27 +57,23 @@ async function loginUser(email, password) {
     const userCollection = await getUserCollection();
     const hashedPassword = crypto.createHash('sha256').update(password).digest('hex');
 
-    // Find user with matching email and password
     const user = await userCollection.findOne({ email, password: hashedPassword });
     if (!user) {
         return null;
     }
 
-    // Create a session for the user
     const sessionCollection = await getSessionCollection();
-    let sessionKey = crypto.randomUUID();
+    const sessionKey = crypto.randomUUID();
 
-    let sd = {
+    const session = {
         key: sessionKey,
         expiry: new Date(Date.now() + 1000 * 60 * 5),
-        data: {
-            email: details.email
-        }
+        data: { email: user.email }
     };
 
-    await sessionCollection.insertOne(sd);
+    await sessionCollection.insertOne(session);
 
-    return sd; // Return the sessionId
+    return session;
 }
 
 const { ObjectId } = require('mongodb');
@@ -89,9 +87,7 @@ async function getUserBySession(sessionId) {
     }
 
     const userCollection = await getUserCollection();
-    const user = await userCollection.findOne({ email: session.data.email });
-
-    return user;
+    return await userCollection.findOne({ email: session.data.email });
 }
 
 async function verifyEmail(token) {
@@ -102,8 +98,10 @@ async function verifyEmail(token) {
         throw new Error('Invalid token');
     }
 
-    await userCollection.updateOne({ _id: user._id }, { $set: { emailVerified: true } });
-    await userCollection.updateOne({ _id: user._id }, { $unset: { verificationToken: '' } });
+    await userCollection.updateOne(
+        { _id: user._id },
+        { $set: { emailVerified: true }, $unset: { verificationToken: '' } }
+    );
     console.log('User email verified');
 }
 
@@ -115,7 +113,10 @@ async function updateUserResetKey(email, resetKey) {
 async function updateUserPassword(resetKey, newPassword) {
     const userCollection = await getUserCollection();
     const hashedPassword = crypto.createHash('sha256').update(newPassword).digest('hex');
-    const result = await userCollection.updateOne({ resetKey }, { $set: { password: hashedPassword }, $unset: { resetKey: '' } });
+    const result = await userCollection.updateOne(
+        { resetKey },
+        { $set: { password: hashedPassword }, $unset: { resetKey: '' } }
+    );
     return result.modifiedCount > 0;
 }
 
@@ -125,7 +126,7 @@ async function deleteSession(sessionId) {
 }
 
 async function getUserDetailsbyEmail(email) {
-    data = getUserDetails(email);
+    const data = await getUserDetails(email);
     return data;
 }
 
@@ -175,37 +176,39 @@ async function isUserBlocked(viewerEmail, profileEmail) {
 
 async function sendMessage(senderEmail, receiverEmail, message) {
     const messagesCollection = await getMessagesCollection();
+    const userCollection = await getUserCollection();
+
     const newMessage = {
         senderEmail,
         receiverEmail,
         message,
         timestamp: new Date()
     };
+
     await messagesCollection.insertOne(newMessage);
 
-    // Check for the "First Conversation" badge
-    const senderMessageCount = await getUserMessageCount(senderEmail);
-    const receiverMessageCount = await getUserMessageCount(receiverEmail);
+    // Increment message counters
+    await userCollection.updateOne(
+        { email: senderEmail },
+        { $inc: { messagesSent: 1 } }
+    );
 
-    if (senderMessageCount === 1 && receiverMessageCount > 0) {
-        await addUserBadge(senderEmail, "First Conversation");
-    }
+    await userCollection.updateOne(
+        { email: receiverEmail },
+        { $inc: { messagesReceived: 1 } }
+    );
 
-    // Check for the "100 Messages Sent" badge
-    if (senderMessageCount === 100) {
-        await addUserBadge(senderEmail, "100 Messages Sent");
-    }
+    console.log(`Message sent from ${senderEmail} to ${receiverEmail}`);
 }
 
 async function getMessages(userEmail, contactEmail) {
     const messagesCollection = await getMessagesCollection();
-    const messages = await messagesCollection.find({
+    return await messagesCollection.find({
         $or: [
             { senderEmail: userEmail, receiverEmail: contactEmail },
             { senderEmail: contactEmail, receiverEmail: userEmail }
         ]
     }).sort({ timestamp: 1 }).toArray();
-    return messages;
 }
 
 module.exports = {
