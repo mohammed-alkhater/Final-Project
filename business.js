@@ -1,8 +1,18 @@
 const crypto = require('crypto');
-const { getUserCollection, getSessionCollection, getUserDetails, getMessagesCollection } = require('./persistence');
-const persistence = require('./persistence')
+const { 
+    getUserCollection, 
+    getSessionCollection, 
+    getUserDetails, 
+    getMessagesCollection,
+    getUserBadges, 
+    addUserBadge, 
+    getUserMessageCount, 
+    getDistinctCommunications 
+} = require('./persistence');
 
-async function registerUser (name, email, password, fluentLanguages, learningLanguages, photo) {
+const persistence = require('./persistence');
+
+async function registerUser(name, email, password, fluentLanguages, learningLanguages, photo) {
     if (!name || !email || !password) {
         throw new Error('All fields are required');
     }
@@ -34,9 +44,9 @@ async function registerUser (name, email, password, fluentLanguages, learningLan
     const verificationUrl = `http://localhost:3000/verify-email?token=${verificationToken}`;
     console.log(`Verification email sent to: ${email}`);
     console.log(`Email content: Please click the following link to verify your email: ${verificationUrl}`);
-};
+}
 
-async function loginUser (email, password) {
+async function loginUser(email, password) {
     let details = await persistence.getUserDetails(email);
     if (!email || !password) {
         throw new Error('Email and password are required');
@@ -53,24 +63,22 @@ async function loginUser (email, password) {
 
     // Create a session for the user
     const sessionCollection = await getSessionCollection();
-    let sessionKey = crypto.randomUUID()
+    let sessionKey = crypto.randomUUID();
 
     let sd = {
         key: sessionKey,
-        expiry: new Date(Date.now() + 1000*60*5),
+        expiry: new Date(Date.now() + 1000 * 60 * 5),
         data: {
             email: details.email
         }
-    }
+    };
 
     await sessionCollection.insertOne(sd);
 
     return sd; // Return the sessionId
-};
-
+}
 
 const { ObjectId } = require('mongodb');
-
 
 async function getUserBySession(sessionId) {
     const sessionCollection = await getSessionCollection();
@@ -85,7 +93,6 @@ async function getUserBySession(sessionId) {
 
     return user;
 }
-
 
 async function verifyEmail(token) {
     const userCollection = await getUserCollection();
@@ -112,13 +119,12 @@ async function updateUserPassword(resetKey, newPassword) {
     return result.modifiedCount > 0;
 }
 
-
 async function deleteSession(sessionId) {
     const sessionCollection = await getSessionCollection();
     await sessionCollection.deleteOne({ _id: new ObjectId(sessionId) });
 }
 
-async function getUserDetailsbyEmail(email){
+async function getUserDetailsbyEmail(email) {
     data = getUserDetails(email);
     return data;
 }
@@ -128,8 +134,6 @@ async function findUsersByLanguages(languages) {
     const users = await userCollection.find({ fluentLanguages: { $in: languages } }).toArray();
     return users;
 }
-
-
 
 async function addContact(userEmail, contactEmail) {
     const userCollection = await getUserCollection();
@@ -178,6 +182,19 @@ async function sendMessage(senderEmail, receiverEmail, message) {
         timestamp: new Date()
     };
     await messagesCollection.insertOne(newMessage);
+
+    // Check for the "First Conversation" badge
+    const senderMessageCount = await getUserMessageCount(senderEmail);
+    const receiverMessageCount = await getUserMessageCount(receiverEmail);
+
+    if (senderMessageCount === 1 && receiverMessageCount > 0) {
+        await addUserBadge(senderEmail, "First Conversation");
+    }
+
+    // Check for the "100 Messages Sent" badge
+    if (senderMessageCount === 100) {
+        await addUserBadge(senderEmail, "100 Messages Sent");
+    }
 }
 
 async function getMessages(userEmail, contactEmail) {
@@ -191,6 +208,21 @@ async function getMessages(userEmail, contactEmail) {
     return messages;
 }
 
-module.exports = { registerUser, loginUser, getUserBySession, verifyEmail, deleteSession,
-    updateUserResetKey, updateUserPassword, getUserDetailsbyEmail,
-    findUsersByLanguages, addContact, removeContact, blockUser, unblockUser, isUserBlocked, sendMessage, getMessages };
+module.exports = {
+    registerUser,
+    loginUser,
+    getUserBySession,
+    verifyEmail,
+    deleteSession,
+    updateUserResetKey,
+    updateUserPassword,
+    getUserDetailsbyEmail,
+    findUsersByLanguages,
+    addContact,
+    removeContact,
+    blockUser,
+    unblockUser,
+    isUserBlocked,
+    sendMessage,
+    getMessages
+};

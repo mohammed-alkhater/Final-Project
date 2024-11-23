@@ -2,7 +2,25 @@ const express = require('express');
 const exphbs = require('express-handlebars');
 const bodyParser = require('body-parser');
 const fileUpload = require('express-fileupload');
-const { registerUser, loginUser, getUserBySession, verifyEmail, deleteSession, updateUserPassword, updateUserResetKey, getUserDetailsbyEmail, findUsersByLanguages, addContact, removeContact, blockUser, isUserBlocked, unblockUser, sendMessage, getMessages } = require('./business');
+const { 
+    registerUser, 
+    loginUser, 
+    getUserBySession, 
+    verifyEmail, 
+    deleteSession, 
+    updateUserPassword, 
+    updateUserResetKey, 
+    getUserDetailsbyEmail, 
+    findUsersByLanguages, 
+    addContact, 
+    removeContact, 
+    blockUser, 
+    isUserBlocked, 
+    unblockUser, 
+    sendMessage, 
+    getMessages 
+} = require('./business');
+const { getUserBadges } = require('./persistence'); // Added badge-related function
 const crypto = require('crypto');
 
 const app = express();
@@ -32,7 +50,6 @@ app.set('views', './views');
 app.get('/register', (req, res) => {
     res.render('register', { message: req.query.message });
 });
-
 
 // Handle registration
 app.post('/register', async (req, res) => {
@@ -85,7 +102,6 @@ app.post('/login', async (req, res) => {
     }
 });
 
-
 // Render the dashboard page
 app.get('/dashboard', async (req, res) => {
     try {
@@ -98,7 +114,18 @@ app.get('/dashboard', async (req, res) => {
             const usersByLanguages = await findUsersByLanguages(user.learningLanguages);
             const contacts = user.contacts || [];
             const filteredUsers = usersByLanguages.filter(u => !user.blockedUsers.includes(u.email));
-            res.render('dashboard', { name: user.name, photo: user.photo, sessionId, usersByLanguages: filteredUsers, contacts });
+            
+            // Fetch badges for the user
+            const badges = await getUserBadges(user.email);
+
+            res.render('dashboard', { 
+                name: user.name, 
+                photo: user.photo, 
+                sessionId, 
+                usersByLanguages: filteredUsers, 
+                contacts,
+                badges // Pass badges to the template
+            });
         } else {
             res.redirect('/login?message=Please log in to access the dashboard');
         }
@@ -112,7 +139,6 @@ app.get('/', (req, res) => {
     res.render('index', { message: req.query.message });
 });
 
-
 // Handle email verification
 app.get('/verify-email', (req, res) => {
     const { token } = req.query;
@@ -120,7 +146,6 @@ app.get('/verify-email', (req, res) => {
     console.log(`Verifying email with token: ${token}`);
     res.render('verify-email', { token });
 });
-
 
 // Handle logout
 app.get('/logout', (req, res) => {
@@ -139,7 +164,6 @@ app.get('/forgot-password', (req, res) => {
     res.render('forgot-password');
 });
 
-
 // Handle forgot password
 app.post('/forgot-password', async (req, res) => {
     const { email } = req.body;
@@ -153,7 +177,6 @@ app.post('/forgot-password', async (req, res) => {
     }
     res.redirect('/forgot-password?message=If the email exists, a reset link has been sent.');
 });
-
 
 // Handle reset password
 app.get('/reset-password', (req, res) => {
@@ -175,7 +198,6 @@ app.post('/reset-password', async (req, res) => {
     }
 });
 
-
 // Handle adding and removing contacts
 app.post('/add-contact', async (req, res) => {
     try {
@@ -191,7 +213,6 @@ app.post('/add-contact', async (req, res) => {
         res.status(400).send('Error: ' + error.message);
     }
 });
-
 
 // Handle removing contacts
 app.post('/remove-contact', async (req, res) => {
@@ -210,7 +231,6 @@ app.post('/remove-contact', async (req, res) => {
 });
 
 const { getUserCollection } = require('./persistence');
-
 
 // Handle blocking and unblocking users
 app.get('/view-contacts', async (req, res) => {
@@ -268,7 +288,6 @@ app.get('/unblock-user', async (req, res) => {
         res.status(400).send('Error: ' + error.message);
     }
 });
-
 
 // Handle viewing profiles
 app.get('/profile', async (req, res) => {

@@ -74,6 +74,24 @@
         .contact-btn:hover {
             background-color: #357ab8;
         }
+        /* Badge Section Styles */
+        .badges-section {
+            margin-top: 20px;
+            padding: 10px;
+            background-color: #f9f9f9;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+        }
+        .badge {
+            display: inline-block;
+            background-color: #4a90e2;
+            color: white;
+            padding: 5px 10px;
+            border-radius: 20px;
+            font-size: 14px;
+            margin: 5px;
+            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+        }
     </style>
 </head>
 <body>
@@ -89,6 +107,19 @@
         </div>
         <a href="/logout?sessionId={{sessionId}}" class="btn">Logout</a>
         <a href="/view-contacts?sessionId={{sessionId}}" class="btn">View Contacts</a>
+        
+        <!-- Badge Section -->
+        <div class="badges-section">
+            <h3>Your Achievements</h3>
+            {{#if badges}}
+                {{#each badges}}
+                    <span class="badge">{{this}}</span>
+                {{/each}}
+            {{else}}
+                <p>No badges earned yet. Start participating to earn achievements!</p>
+            {{/if}}
+        </div>
+
         <h3>Users who speak the languages you are learning:</h3>
         {{#each usersByLanguages}}
             <div class="user-snippet">
