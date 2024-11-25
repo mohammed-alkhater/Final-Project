@@ -4,10 +4,8 @@ const {
     getSessionCollection, 
     getUserDetails, 
     getMessagesCollection,
-    getUserBadges, 
     addUserBadge, 
     getUserMessageCount, 
-    getDistinctCommunications 
 } = require('./persistence');
 
 const persistence = require('./persistence');
@@ -197,6 +195,14 @@ async function sendMessage(senderEmail, receiverEmail, message) {
         { email: receiverEmail },
         { $inc: { messagesReceived: 1 } }
     );
+
+    if (await getUserMessageCount(senderEmail) >= 100) {
+        await addUserBadge(senderEmail, 'uploads/100_messages.png');
+    }
+
+    if (await getUserMessageCount(senderEmail) >= 1) {
+        await addUserBadge(senderEmail, 'uploads/5431315.png');
+    }
 
     console.log(`Message sent from ${senderEmail} to ${receiverEmail}`);
 }
